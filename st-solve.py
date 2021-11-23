@@ -16,7 +16,8 @@ def find_top(image):
 		The image to be processed, read in using PIL.Image.open().
 	  
 	Returns:
-	  tuple of y location of top of first grid square
+	  y (int):
+	    y location of top of first grid square
 	"""
 
 	height = image.height
@@ -28,7 +29,7 @@ def find_top(image):
 	traversed_first = False
 
 	while y < height:
-		
+		# Check the pixel at x = 10 to avoid border colour
 		colour = image.getpixel((10,y))
 		
 		# If we haven't finished the first white band, check if colour
@@ -39,9 +40,9 @@ def find_top(image):
 			y+=1
 			continue
 
-		# If traversed_first == True and we see white, we've finished.
-		if colour == (255,255,255):
-			print(colour)
+		# If traversed_first == True and we see white or blue,
+		# we've finished.
+		if colour in [(255,255,255), (0, 174, 239), (0, 178, 239)]:
 			return y
 
 
@@ -49,9 +50,12 @@ def find_top(image):
 		y+=1
 
 
-
 infile = sys.argv[1]
 
 image = Image.open(infile)
 
 print(find_top(image))
+
+
+# for x in range(390, 410):
+# 	print(image.getpixel((x,340)))
