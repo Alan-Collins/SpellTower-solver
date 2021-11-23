@@ -69,7 +69,7 @@ def find_top_bottom(image):
 	return (top, bottom)
 
 
-def find_grid(top, bottom, left, right, nrow, ncol):
+def find_grid(left, top, right, bottom, nrow, ncol):
 	"""Figure out the boundaries of the squares in a grid.
 	
 		Given locations the top, bottom, left, and right limits of a 
@@ -77,14 +77,14 @@ def find_grid(top, bottom, left, right, nrow, ncol):
 		returns the boundaries of each square in the grid.
 	
 		Args:
-		  top (int):
-		    Upper boundary of grid
-		  bottom (int):
-			Lower boundary of grid
 		  left (int):
 		    Left-most boundary of grid
+		  top (int):
+		    Upper boundary of grid
 		  right (int):
 		    Right-most boundary of grid
+		  bottom (int):
+			Lower boundary of grid
 		  nrow (int):
 		    Number of rows of squares
 		  ncol (int):
@@ -94,7 +94,7 @@ def find_grid(top, bottom, left, right, nrow, ncol):
 		  List of lists of tuples describing the boundaries of each
 		  square in the grid. Each square is represented by a tuple
 		  describing square's location as follows:
-		    (top, bottom, left, right)
+		    (left, top, right, bottom)
 		  Each row of squares is organized into a list, and the rows are
 		  organized into the uppermost list.
 
@@ -105,12 +105,12 @@ def find_grid(top, bottom, left, right, nrow, ncol):
 		  is represented as follows:
 		    [
 		     [
-		      (top1,bottom1,left1,right1),
-		      (top2,bottom2,left2,right2)
+		      (left1,top1,right1,bottom1),
+		      (left2,top2,right2,bottom2)
 		     ],
 		     [
-		      (top3,bottom3,left3,right3),
-		      (top4,bottom4,left4,right4)
+		      (left3,top3,right3,bottom3),
+		      (left4,top4,right4,bottom4)
 		     ],
 		    ]
 	"""
@@ -127,7 +127,7 @@ def find_grid(top, bottom, left, right, nrow, ncol):
 	for i in range(top, col_end, square_height):
 		row = []
 		for j in range(left, row_end, square_width):
-			row.append((i, i+square_height, j, j+square_width))
+			row.append((j, i, j+square_width, i+square_height))
 		grid.append(row)
 
 	return grid
@@ -139,4 +139,10 @@ image = Image.open(infile)
 
 top, bottom = find_top_bottom(image)
 
-grid = find_grid(top, bottom, 0, image.width, 12, 8)
+grid = find_grid(
+	left=0,
+	top=top,
+	right=image.width,
+	bottom=bottom,
+	nrow=12,
+	ncol=8)
