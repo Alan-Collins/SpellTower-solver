@@ -229,25 +229,23 @@ def populate_grid(image, grid):
 	return game_grid
 
 
+def main():
+	infile = sys.argv[1]
+
+	image = Image.open(infile)
+
+	top, bottom = find_top_bottom(image)
+
+	grid = find_grid(
+		left=0,
+		top=top-2,
+		right=image.width,
+		bottom=bottom,
+		nrow=12,
+		ncol=8)
+
+	game_grid = populate_grid(image, grid)
 
 
-
-
-infile = sys.argv[1]
-
-image = Image.open(infile)
-
-top, bottom = find_top_bottom(image)
-
-grid = find_grid(
-	left=0,
-	top=top-2,
-	right=image.width,
-	bottom=bottom,
-	nrow=12,
-	ncol=8)
-
-game_grid = populate_grid(image, grid)
-
-for i in game_grid[5]:
-	print(i.behaviour, i.letter)
+if __name__ == '__main__':
+	main()
