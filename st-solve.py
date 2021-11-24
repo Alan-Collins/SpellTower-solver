@@ -2,26 +2,44 @@
 
 import sys
 from PIL import Image
+from math import ceil
+import numpy as np
+
 import pytesseract
 import cv2
-from math import ceil
+
+		
+class GameSquare():
+	"""Class to contain the letter and attributes in each square in grid
+	
+		Attributes:
+		  letter (str):
+		    Which alphabet character is here.
+		  behaviour (str):
+		    How does this square behave? Options: 
+		      ['white', 'blue', 'grey']
+	"""
+	def __init__(self, letter, behaviour):
+		self.letter = letter
+		self.behaviour = behaviour
+		
 
 def find_top_bottom(image):
 	"""Find the top and bottom of the grid of letters
 	
-		Scans from the top of the image until it finds the first white
-		or blue pixel after the band of colour at the top of the grid.
+	Scans from the top of the image until it finds the first white
+	or blue pixel after the band of colour at the top of the grid.
 
-		Repeat from the bottom. Search until first white or blue pixel
-		with no band to worry about.
+	Repeat from the bottom. Search until first white or blue pixel
+	with no band to worry about.
 
-		Args:
-		  image (PIL.Image instance):
-			The image to be processed, read in using PIL.Image.open().
-		  
-		Returns:
-		  (top, bottom) (tuple of ints):
-		    y location of top of first grid square an bottom of the last
+	Args:
+	  image (PIL.Image instance):
+		The image to be processed, read in using PIL.Image.open().
+	  
+	Returns:
+	  (top, bottom) (tuple of ints):
+	    y location of top of first grid square an bottom of the last
 	"""
 
 	height = image.height
@@ -72,47 +90,47 @@ def find_top_bottom(image):
 def find_grid(left, top, right, bottom, nrow, ncol):
 	"""Figure out the boundaries of the squares in a grid.
 	
-		Given locations the top, bottom, left, and right limits of a 
-		grid as well as the number of squares in each row and column,
-		returns the boundaries of each square in the grid.
-	
-		Args:
-		  left (int):
-		    Left-most boundary of grid
-		  top (int):
-		    Upper boundary of grid
-		  right (int):
-		    Right-most boundary of grid
-		  bottom (int):
-			Lower boundary of grid
-		  nrow (int):
-		    Number of rows of squares
-		  ncol (int):
-		    Number of columns of squares
-	
-		Returns:
-		  List of lists of tuples describing the boundaries of each
-		  square in the grid. Each square is represented by a tuple
-		  describing square's location as follows:
-		    (left, top, right, bottom)
-		  Each row of squares is organized into a list, and the rows are
-		  organized into the uppermost list.
+	Given locations the top, bottom, left, and right limits of a 
+	grid as well as the number of squares in each row and column,
+	returns the boundaries of each square in the grid.
 
-		  Therefore, a simple grid of 4 squares:
+	Args:
+	  left (int):
+	    Left-most boundary of grid
+	  top (int):
+	    Upper boundary of grid
+	  right (int):
+	    Right-most boundary of grid
+	  bottom (int):
+		Lower boundary of grid
+	  nrow (int):
+	    Number of rows of squares
+	  ncol (int):
+	    Number of columns of squares
 
-		  	1	2
-		  	3	4
-		  is represented as follows:
-		    [
-		     [
-		      (left1,top1,right1,bottom1),
-		      (left2,top2,right2,bottom2)
-		     ],
-		     [
-		      (left3,top3,right3,bottom3),
-		      (left4,top4,right4,bottom4)
-		     ],
-		    ]
+	Returns:
+	  List of lists of tuples describing the boundaries of each
+	  square in the grid. Each square is represented by a tuple
+	  describing square's location as follows:
+	    (left, top, right, bottom)
+	  Each row of squares is organized into a list, and the rows are
+	  organized into the uppermost list.
+
+	  Therefore, a simple grid of 4 squares:
+
+	  	1	2
+	  	3	4
+	  is represented as follows:
+	    [
+	     [
+	      (left1,top1,right1,bottom1),
+	      (left2,top2,right2,bottom2)
+	     ],
+	     [
+	      (left3,top3,right3,bottom3),
+	      (left4,top4,right4,bottom4)
+	     ],
+	    ]
 	"""
 
 	grid = []
@@ -120,17 +138,99 @@ def find_grid(left, top, right, bottom, nrow, ncol):
 	square_height = ceil((bottom-top) /nrow)
 	square_width = ceil((right-left) /ncol)
 
-	# Make sure the range includes the bottom and top values.
-	col_end = bottom if (bottom-top) %nrow ==0 else bottom+square_height
-	row_end = right if (right-left) %ncol ==0 else right+square_width
-
-	for i in range(top, col_end, square_height):
+	for i in range(top, bottom, square_height):
 		row = []
-		for j in range(left, row_end, square_width):
+		for j in range(left, right, square_width):
 			row.append((j, i, j+square_width, i+square_height))
 		grid.append(row)
 
 	return grid
+
+
+def identify_square(colour):
+	"""Identify square attributes based on colour"""
+
+	if colour == (255, 255, 255):
+		return 'white'
+
+
+	elif colour in [(0, 174, 239), (0, 178, 239)]:
+		return 'blue'
+
+
+	elif colour in [(49, 53, 49), (58, 53, 58)]:
+		return 'grey'
+
+
+	else:
+		raise ValueError("Colour not recognised.")
+
+
+
+def populate_grid(image, grid):
+	"""Populate a grid with GameSquare instances representing the game.
+	
+	Works through the provided grid of square boundaries, crops the
+	corresponding parts of the provided image, and extracts the letter
+	and square type information from that image.
+
+	Args:
+	  image (PIL.Image instance):
+		The image to be processed, read in using PIL.Image.open().
+	  grid (list of lists of tuples):
+		List of lists of tuples describing the boundaries of each
+	    square in the grid. Each square is represented by a tuple
+	    describing square's location as follows:
+	      (left, top, right, bottom)
+	    Each row of squares is organized into a list, and the rows are
+	    organized into the uppermost list.
+
+	Returns:
+	  List of lists of GameSquare instances.
+	"""
+
+	game_grid = []
+
+	for i in grid:
+		row = []
+		for square in i:
+			cropped = image.crop(square)
+			cols = cropped.getcolors()
+			cols.sort(key=lambda x: x[0], reverse=True)
+
+			behaviour = identify_square(cols[0][1])
+
+			# Need to convert image pixels to numpy array for cv2
+			cv_image = np.array(cropped) 
+			# Convert RGB to BGR 
+			cv_image = cv_image[:, :, ::-1].copy() 
+
+			gray_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+
+			threshold_img = cv2.threshold(
+				gray_image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+
+			# Use --psm 10 as docs state:
+			# 10 = Treat the image as a single character.
+			letter = pytesseract.image_to_string(
+					threshold_img, config=r'--psm 10', 
+					lang='eng',
+					).strip()
+
+			# This is rubbish at spotting Qs so if it's blue and called
+			# C then it is really a Q as the game doesn't spawn blue Cs
+			if behaviour == 'blue' and letter == 'C':
+				letter = 'Q'
+
+			row.append(GameSquare(letter=letter, behaviour=behaviour))
+
+		game_grid.append(row)
+
+	return game_grid
+
+
+
+
 
 
 infile = sys.argv[1]
@@ -141,8 +241,13 @@ top, bottom = find_top_bottom(image)
 
 grid = find_grid(
 	left=0,
-	top=top,
+	top=top-2,
 	right=image.width,
 	bottom=bottom,
 	nrow=12,
 	ncol=8)
+
+game_grid = populate_grid(image, grid)
+
+for i in game_grid[5]:
+	print(i.behaviour, i.letter)
