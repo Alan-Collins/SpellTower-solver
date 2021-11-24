@@ -4,6 +4,7 @@ import sys
 from PIL import Image
 from math import ceil
 import numpy as np
+import json
 
 import pytesseract
 import cv2
@@ -230,9 +231,14 @@ def populate_grid(image, grid):
 
 
 def main():
-	infile = sys.argv[1]
 
-	image = Image.open(infile)
+	with open('indexed_dict.json') as fin:
+		indexed_dict = json.load(fin)
+
+	with open('letter_scores.json') as fin:
+		letter_scores = json.load(fin)
+
+	image = Image.open(sys.argv[1])
 
 	top, bottom = find_top_bottom(image)
 
@@ -245,6 +251,8 @@ def main():
 		ncol=8)
 
 	game_grid = populate_grid(image, grid)
+
+	print(game_grid)
 
 
 if __name__ == '__main__':
