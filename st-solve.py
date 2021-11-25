@@ -230,6 +230,45 @@ def populate_grid(image, grid):
 	return game_grid
 
 
+def calc_score(word, bonus_letters, score_dict):
+	"""Calculates score of a word based on simple rules.
+	
+	Calculates score for words based on what seems to be the scoring
+	system used in spell tower:
+	
+	The scrabble letter score of the letters in the word + the bonus
+	letters in surrounding tiles are summed and multiplied by the length
+	of the word.
+
+	Args:
+	  word (str):
+		Any string of alphabetical characters
+	  bonus_letters (str):
+	    The bonus letters given for words over 4 characters
+	  score_dict (dict):
+		Characters as keys, their corresponding integer score as values
+	  
+
+	Returns:
+	  Int score of the provided word
+	"""
+
+	score = 0
+
+	for c in word.upper(): # Ensure upper case and go letter by letter
+		score += score_dict[c]
+
+
+	bonus_score = 0
+	for c in bonus_letters.upper():
+		bonus_score += score_dict[c]
+
+	score = (score+bonus_score) * len(word)
+
+
+	return score
+
+
 def main():
 
 	with open('indexed_dict.json') as fin:
@@ -252,7 +291,6 @@ def main():
 
 	game_grid = populate_grid(image, grid)
 
-	print(game_grid)
 
 
 if __name__ == '__main__':
