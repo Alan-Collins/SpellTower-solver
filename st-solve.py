@@ -19,10 +19,13 @@ class GameSquare():
 		  behaviour (str):
 		    How does this square behave? Options: 
 		      ['white', 'blue', 'grey']
+		  loc (tuple of ints):
+		    Where in the game_grid the square is found.
 	"""
-	def __init__(self, letter, behaviour):
+	def __init__(self, letter, behaviour, loc):
 		self.letter = letter
 		self.behaviour = behaviour
+		self.loc = loc
 		
 
 class Word():
@@ -213,9 +216,9 @@ def populate_grid(image, grid):
 
 	game_grid = []
 
-	for i in grid:
+	for y, line in enumerate(grid):
 		row = []
-		for square in i:
+		for x, square in enumerate(line):
 			cropped = image.crop(square)
 			cols = cropped.getcolors()
 			cols.sort(key=lambda x: x[0], reverse=True)
@@ -254,7 +257,8 @@ def populate_grid(image, grid):
 				if threshold_img[90,120] == 0:
 					letter = 'P'
 
-			row.append(GameSquare(letter=letter, behaviour=behaviour))
+			row.append(GameSquare(
+				letter=letter, behaviour=behaviour, loc=(y,x)))
 		game_grid.append(row)
 
 	return game_grid
@@ -353,8 +357,6 @@ def identify_words(grid, start, fragments_dict, current_word='',
 				yield finished_word
 
 			elif fragments_dict[new_word]== 'b':
-				if new_word == 'ionic':
-					print(1)
 				locs = current_locs + [(i,j)]
 				for word in identify_words(grid, (i,j), fragments_dict, 
 					current_word=new_word, current_locs=locs):
@@ -369,9 +371,66 @@ def identify_words(grid, start, fragments_dict, current_word='',
 					yield word
 
 
-def print_game(game_grid):
+def print_game(game_grid, word=None):
+
+	cols = {
+	'Bold': '\u001b[1m',
+	'Underline': '\u001b[4m',
+	'Black': '\u001b[30m',
+	'Red': '\u001b[31m',
+	'Green': '\u001b[32m',
+	'Yellow': '\u001b[33m',
+	'Blue': '\u001b[34m',
+	'Magenta': '\u001b[35m',
+	'Cyan': '\u001b[36m',
+	'White': '\u001b[37m',
+	'Reset': '\u001b[0m'
+	}
+	
+	# If highlighting a word, extract relevant locations.
+	if word:
+		print(word.word)
+	word_idxs = word.locs if word else []
+	bonus_idxs = word.bonus_locs if word else []
+	string = ''
 	for line in game_grid:
-		print(' '.join([i.letter for i in line]))
+		line_squares = []
+		for square in line:
+			
+			# To align columns, empty strings must be set to a space
+			if square.letter == '':
+				letter = ' '
+			else:
+				letter = square.letter
+			# Colour the first and last letter differently to make clear
+			if square.loc in word_idxs:
+				if square.loc == word_idxs[0]:
+					col = cols['Cyan']
+				elif square.loc == word_idxs[-1]:
+					col = cols['Yellow']
+				else:
+					col = cols['Green']
+				line_squares.append('{}{}{}{}{}'.format(
+					cols['Underline'],
+					cols['Bold'],
+					col,
+					letter,
+					cols['Reset']
+					))
+			elif square.loc in bonus_idxs:
+				line_squares.append('{}{}{}{}{}'.format(
+					cols['Underline'],
+					cols['Bold'],
+					cols['Magenta'],
+					letter,
+					cols['Reset']
+					))
+			else:
+				line_squares.append(letter)
+		string += ' '.join(line_squares) + '\n'
+
+	print(string)
+
 
 def main():
 
@@ -395,20 +454,23 @@ def main():
 
 	game_grid = populate_grid(image, grid)
 
-	words = []
-	# for y in range(len(game_grid)):
-	# 	for x in range(len(game_grid[0])):
-	# 		words += [i for i in identify_words(game_grid,(y,x),indexed_dict,
-	# 			current_word=game_grid[y][x].letter.lower(), 
-	# 			current_locs=[(y,x)])]
+	
 
-	words += [i for i in identify_words(game_grid,(0,0),indexed_dict,
-				current_word=game_grid[0][0].letter.lower(), 
-				current_locs=[(0,0)])]
+	words = []
+	for y in range(len(game_grid)):
+		for x in range(len(game_grid[0])):
+			words += [i for i in identify_words(game_grid,(y,x),indexed_dict,
+				current_word=game_grid[y][x].letter.lower(), 
+				current_locs=[(y,x)])]
+
+	# words += [i for i in identify_words(game_grid,(0,0),indexed_dict,
+				# current_word=game_grid[0][0].letter.lower(), 
+				# current_locs=[(0,0)])]
 
 	words.sort(key=lambda x: len(x.word), reverse=True)
-	print([vars(i) for i in words])
+	# print([vars(i) for i in words])
 
+	print_game(game_grid)#, words[0])
 
 
 
