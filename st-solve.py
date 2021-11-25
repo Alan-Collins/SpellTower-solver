@@ -235,7 +235,7 @@ def calc_score(word, bonus_letters, score_dict):
 	
 	Calculates score for words based on what seems to be the scoring
 	system used in spell tower:
-	
+
 	The scrabble letter score of the letters in the word + the bonus
 	letters in surrounding tiles are summed and multiplied by the length
 	of the word.
@@ -269,6 +269,62 @@ def calc_score(word, bonus_letters, score_dict):
 	return score
 
 
+def identify_word(grid, start, fragments_dict, current_word='',
+	current_locs=[]):
+	"""
+
+	Args:
+	  grid (list of lists):
+	    game grid
+	  start (tuple):
+	    x and y coordinate of the starting character of the words to
+	    build
+	  fragments_dict (dict):
+	    Dict of all possible words and their constituent fragments.
+
+	Returns:
+	  tuple of the best word, its score a list of its coordinates in the
+	  game grid from start to finish of the word. e.g.
+	  	('apple', 155, [(0,1), (1,1), (1,2), (2,3), (2,2)])
+	"""
+	x,y = start
+
+	grid_w = len(grid[0])
+	grid_h = len(grid)
+
+	for i in range(x-1,x+2):
+		if i < 0 or i > grid_w:
+			continue
+		for j in range(y-1, y+2):
+			if j < 0 or j > grid_h:
+				continue
+			if (i,j) in current_locs:
+				continue
+			letter = grid[i][j].letter.lower()
+			if letter == None:
+				continue
+
+			new_word = current_word+letter
+
+			if new_word not in fragments_dict:
+				continue
+
+			if fragments_dict[new_word] == 'w':
+				yield new_word
+			elif fragments_dict[new_word]== 'b':
+				locs = current_locs + [(i,j)]
+				for word in identify_word(grid, (i,j), fragments_dict, 
+					current_word=new_word, current_locs=locs):
+					yield word
+				yield new_word
+				
+			else:
+				locs = current_locs + [(i,j)]
+				for word in identify_word(grid, (i,j), fragments_dict, 
+					current_word=new_word, current_locs=locs):
+					yield word
+
+
 def main():
 
 	with open('indexed_dict.json') as fin:
@@ -290,6 +346,12 @@ def main():
 		ncol=8)
 
 	game_grid = populate_grid(image, grid)
+
+	words = []
+	for x in range(3):
+		words += [i for i in identify_word(game_grid,(x,0),indexed_dict,
+		current_word=game_grid[x][0].letter.lower(), current_locs=[(x,0)])]
+	print(words)
 
 
 
