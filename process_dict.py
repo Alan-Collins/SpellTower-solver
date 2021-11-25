@@ -55,7 +55,7 @@ def index_words(words):
 		# If the word is longer than 3 letters, we need to go through
 		# all the possible fragments. e.g. for 5 letter word, do 3, 4, 5
 		# If the word is 3 letters then range won't return anything here
-		for i in range(3, l):
+		for i in range(2, l):
 			s = word[:i]
 			# If the string is in the dict and not already a fragment,
 			# Then score is as 'b'
