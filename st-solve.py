@@ -295,10 +295,10 @@ def identify_word(grid, start, fragments_dict, current_word='',
 	grid_w = len(grid[0])
 	grid_h = len(grid)
 
-	for i in range(x-1,x+2):
+	for i in range(y-1,y+2):
 		if i < 0 or i >= grid_h:
 			continue
-		for j in range(y-1, y+2):
+		for j in range(x-1, x+2):
 			if j < 0 or j >= grid_w:
 				continue
 			if (i,j) in current_locs:
