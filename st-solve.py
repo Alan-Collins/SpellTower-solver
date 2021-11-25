@@ -299,7 +299,7 @@ def calc_score(word, bonus_letters, score_dict):
 	return score
 
 
-def identify_word(grid, start, fragments_dict, current_word='',
+def identify_words(grid, start, fragments_dict, current_word='',
 	current_locs=[]):
 	"""
 
@@ -311,11 +311,16 @@ def identify_word(grid, start, fragments_dict, current_word='',
 	    build
 	  fragments_dict (dict):
 	    Dict of all possible words and their constituent fragments.
+	  current_word (str):
+	    The letters that have been added to the word so far.
+	  current_locs (list of tuples or ints):
+	    The locations of letters added to the word so far.
 
-	Returns:
-	  tuple of the best word, its score a list of its coordinates in the
-	  game grid from start to finish of the word. e.g.
-	  	('apple', 155, [(0,1), (1,1), (1,2), (2,3), (2,2)])
+	Yields:
+	  Word instance of every word, its string and a list of its 
+	  coordinates in the game grid from start to finish of the word. 
+	  e.g.
+	  	('apple', [(0,1), (1,1), (1,2), (2,3), (2,2)])
 	"""
 	y,x = start
 
@@ -325,11 +330,14 @@ def identify_word(grid, start, fragments_dict, current_word='',
 	for i in range(y-1,y+2):
 		if i < 0 or i >= grid_h:
 			continue
+
 		for j in range(x-1, x+2):
 			if j < 0 or j >= grid_w:
 				continue
+
 			if (i,j) in current_locs:
 				continue
+
 			letter = grid[i][j].letter.lower()
 			if letter == '':
 				continue
@@ -343,17 +351,20 @@ def identify_word(grid, start, fragments_dict, current_word='',
 				locs = current_locs + [(i,j)]
 				finished_word = Word(new_word,locs)
 				yield finished_word
+
 			elif fragments_dict[new_word]== 'b':
+				if new_word == 'ionic':
+					print(1)
 				locs = current_locs + [(i,j)]
-				for word in identify_word(grid, (i,j), fragments_dict, 
+				for word in identify_words(grid, (i,j), fragments_dict, 
 					current_word=new_word, current_locs=locs):
-					word
+					yield word
 				finished_word = Word(new_word,locs)
 				yield finished_word
 				
 			else:
 				locs = current_locs + [(i,j)]
-				for word in identify_word(grid, (i,j), fragments_dict, 
+				for word in identify_words(grid, (i,j), fragments_dict, 
 					current_word=new_word, current_locs=locs):
 					yield word
 
@@ -385,15 +396,19 @@ def main():
 	game_grid = populate_grid(image, grid)
 
 	words = []
-	for y in range(len(game_grid)):
-		for x in range(len(game_grid[0])):
-			words += [i for i in identify_word(game_grid,(y,x),indexed_dict,
-				current_word=game_grid[y][x].letter.lower(), 
-				current_locs=[(y,x)])]
+	# for y in range(len(game_grid)):
+	# 	for x in range(len(game_grid[0])):
+	# 		words += [i for i in identify_words(game_grid,(y,x),indexed_dict,
+	# 			current_word=game_grid[y][x].letter.lower(), 
+	# 			current_locs=[(y,x)])]
+
+	words += [i for i in identify_words(game_grid,(0,0),indexed_dict,
+				current_word=game_grid[0][0].letter.lower(), 
+				current_locs=[(0,0)])]
 
 	words.sort(key=lambda x: len(x.word), reverse=True)
-	print([i.word for i in words[:2]])
-	print([i.locs for i in words[:2]])
+	print([vars(i) for i in words])
+
 
 
 
