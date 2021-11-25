@@ -167,7 +167,6 @@ def identify_square(colour):
 		raise ValueError("Colour not recognised.")
 
 
-
 def populate_grid(image, grid):
 	"""Populate a grid with GameSquare instances representing the game.
 	
@@ -222,6 +221,10 @@ def populate_grid(image, grid):
 			# C then it is really a Q as the game doesn't spawn blue Cs
 			if behaviour == 'blue' and letter == 'C':
 				letter = 'Q'
+
+			# It classifies I as | due to the typeface in spell tower.
+			if letter == '|':
+				letter = 'I'
 
 			row.append(GameSquare(letter=letter, behaviour=behaviour))
 
@@ -310,19 +313,20 @@ def identify_word(grid, start, fragments_dict, current_word='',
 				continue
 
 			if fragments_dict[new_word] == 'w':
-				yield new_word
+				locs = current_locs + [(i,j)]
+				yield new_word, locs
 			elif fragments_dict[new_word]== 'b':
 				locs = current_locs + [(i,j)]
-				for word in identify_word(grid, (i,j), fragments_dict, 
+				for word, locs in identify_word(grid, (i,j), fragments_dict, 
 					current_word=new_word, current_locs=locs):
-					yield word
-				yield new_word
+					yield word, locs
+				yield new_word, locs
 				
 			else:
 				locs = current_locs + [(i,j)]
-				for word in identify_word(grid, (i,j), fragments_dict, 
+				for word, locs in identify_word(grid, (i,j), fragments_dict, 
 					current_word=new_word, current_locs=locs):
-					yield word
+					yield word, locs
 
 
 def main():
@@ -351,6 +355,8 @@ def main():
 	for x in range(3):
 		words += [i for i in identify_word(game_grid,(x,0),indexed_dict,
 		current_word=game_grid[x][0].letter.lower(), current_locs=[(x,0)])]
+
+	words.sort(key=lambda x: len(x[0]), reverse=True)
 	print(words)
 
 
