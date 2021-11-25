@@ -226,8 +226,13 @@ def populate_grid(image, grid):
 			if letter == '|':
 				letter = 'I'
 
-			row.append(GameSquare(letter=letter, behaviour=behaviour))
+			# It classifies P as D so catch that by checking the bottom
+			# of the loop in the P. That line should be lower down in D
+			if letter == 'D':
+				if threshold_img[90,120] == 0:
+					letter = 'P'
 
+			row.append(GameSquare(letter=letter, behaviour=behaviour))
 		game_grid.append(row)
 
 	return game_grid
