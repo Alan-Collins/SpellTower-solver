@@ -296,10 +296,10 @@ def identify_word(grid, start, fragments_dict, current_word='',
 	grid_h = len(grid)
 
 	for i in range(x-1,x+2):
-		if i < 0 or i > grid_w:
+		if i < 0 or i >= grid_h:
 			continue
 		for j in range(y-1, y+2):
-			if j < 0 or j > grid_h:
+			if j < 0 or j >= grid_w:
 				continue
 			if (i,j) in current_locs:
 				continue
@@ -352,12 +352,14 @@ def main():
 	game_grid = populate_grid(image, grid)
 
 	words = []
-	for x in range(3):
-		words += [i for i in identify_word(game_grid,(x,0),indexed_dict,
-		current_word=game_grid[x][0].letter.lower(), current_locs=[(x,0)])]
+	for y in range(len(game_grid)):
+		for x in range(len(game_grid[0])):
+			words += [i for i in identify_word(game_grid,(y,x),indexed_dict,
+				current_word=game_grid[y][x].letter.lower(), 
+				current_locs=[(y,x)])]
 
 	words.sort(key=lambda x: len(x[0]), reverse=True)
-	print(words)
+	print(words[:2])
 
 
 
