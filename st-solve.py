@@ -25,6 +25,28 @@ class GameSquare():
 		self.behaviour = behaviour
 		
 
+class Word():
+	"""Class to contain the words identified in game_grid
+	
+		Attributes:
+		  word (str):
+		    The sequence of characters identified as a word.
+		  locs (list of tuples of ints):
+		    list of location of each character of word in game grid.
+		   bonus_locs (list of tuples of ints):
+		     list of locations of bonus tiles that will be removed by
+		     this word and will be used for scoring.
+		   score (int):
+		     Score of this word.
+
+	"""
+	def __init__(self, word, locs, bonus_locs=[], score=0):
+		self.word = word
+		self.locs = locs
+		self.bonus_locs = bonus_locs
+		self.score = score
+
+
 def find_top_bottom(image):
 	"""Find the top and bottom of the grid of letters
 	
@@ -295,7 +317,7 @@ def identify_word(grid, start, fragments_dict, current_word='',
 	  game grid from start to finish of the word. e.g.
 	  	('apple', 155, [(0,1), (1,1), (1,2), (2,3), (2,2)])
 	"""
-	x,y = start
+	y,x = start
 
 	grid_w = len(grid[0])
 	grid_h = len(grid)
@@ -319,20 +341,26 @@ def identify_word(grid, start, fragments_dict, current_word='',
 
 			if fragments_dict[new_word] == 'w':
 				locs = current_locs + [(i,j)]
-				yield new_word, locs
+				finished_word = Word(new_word,locs)
+				yield finished_word
 			elif fragments_dict[new_word]== 'b':
 				locs = current_locs + [(i,j)]
-				for word, locs in identify_word(grid, (i,j), fragments_dict, 
+				for word in identify_word(grid, (i,j), fragments_dict, 
 					current_word=new_word, current_locs=locs):
-					yield word, locs
-				yield new_word, locs
+					word
+				finished_word = Word(new_word,locs)
+				yield finished_word
 				
 			else:
 				locs = current_locs + [(i,j)]
-				for word, locs in identify_word(grid, (i,j), fragments_dict, 
+				for word in identify_word(grid, (i,j), fragments_dict, 
 					current_word=new_word, current_locs=locs):
-					yield word, locs
+					yield word
 
+
+def print_game(game_grid):
+	for line in game_grid:
+		print(' '.join([i.letter for i in line]))
 
 def main():
 
@@ -363,8 +391,9 @@ def main():
 				current_word=game_grid[y][x].letter.lower(), 
 				current_locs=[(y,x)])]
 
-	words.sort(key=lambda x: len(x[0]), reverse=True)
-	print(words[:2])
+	words.sort(key=lambda x: len(x.word), reverse=True)
+	print([i.word for i in words[:2]])
+	print([i.locs for i in words[:2]])
 
 
 
