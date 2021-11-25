@@ -304,7 +304,7 @@ def identify_word(grid, start, fragments_dict, current_word='',
 			if (i,j) in current_locs:
 				continue
 			letter = grid[i][j].letter.lower()
-			if letter == None:
+			if letter == '':
 				continue
 
 			new_word = current_word+letter
