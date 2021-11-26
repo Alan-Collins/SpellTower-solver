@@ -267,7 +267,7 @@ def populate_grid(image, grid):
 	return game_grid
 
 
-def calc_score(word, bonus_letters, score_dict, nblue):
+def calc_score(word, bonus_letters, score_dict):
 	"""Calculates score of a word based on simple rules.
 	
 	Calculates score for words based on what seems to be the scoring
@@ -284,18 +284,12 @@ def calc_score(word, bonus_letters, score_dict, nblue):
 	    The bonus letters given for words over 4 characters
 	  score_dict (dict):
 		Characters as keys, their corresponding integer score as values
-	  nblue (int):
-	    number of blue squares in the list of bonus squares. Each is
-	    worth 10 points.
-	  
 
 	Returns:
 	  Int score of the provided word
 	"""
 
 	score = 0
-
-	score += 10*nblue
 
 	for c in word.upper(): # Ensure upper case and go letter by letter
 		score += score_dict[c]
@@ -304,6 +298,7 @@ def calc_score(word, bonus_letters, score_dict, nblue):
 	bonus_score = 0
 	for c in bonus_letters.upper():
 		bonus_score += score_dict[c]
+
 
 	score = (score+bonus_score) * len(word)
 
@@ -477,17 +472,24 @@ def identify_bonus(word, game_grid):
 
 		# else square must be white so check all adjacent squares
 		for i in [y-1, y+1]:
+			j = x
 			# If outside of game grid skip
 			if i < 0 or i >= len(game_grid):
 				continue
-			for j in [x-1, x+1]:
-				# If outside of game grid skip
-				if j < 0 or j >= len(game_grid[0]):
-					continue
-				if (i,j) in word.locs: # Don't inlcude word squares
-					continue
+			if (i,j) in word.locs: # Don't inlcude word squares
+				continue
 
-				blocs.append(game_grid[i][j])
+			blocs.append(game_grid[i][j])
+
+		for j in [x-1, x+1]:
+			i = y
+			# If outside of game grid skip
+			if j < 0 or j >= len(game_grid[0]):
+				continue
+			if (i,j) in word.locs: # Don't inlcude word squares
+				continue
+
+			blocs.append(game_grid[i][j])
 
 	return blocs
 
@@ -529,22 +531,21 @@ def main():
 
 	words.sort(key=lambda x: len(x.word), reverse=True)
 	
+	for first_word in words[:3]:
 
-	first_word = words[0]
+		first_word.bonus_sqs = identify_bonus(first_word, game_grid)
 
-	first_word.bonus_sqs = identify_bonus(first_word, game_grid)
+		first_word.bonus_locs = [i.loc for i in first_word.bonus_sqs]
 
-	first_word.bonus_locs = [i.loc for i in first_word.bonus_sqs]
-
-	bonus_letters = (''.join([i.letter for i in first_word.bonus_sqs]) 
-		+ first_word.word)
+		bonus_letters = (''.join([i.letter for i in first_word.bonus_sqs]) 
+			+ first_word.word)
 
 
-	print_game(game_grid, first_word)
+		print_game(game_grid, first_word)
 
-	
+		
 
-	print(calc_score(first_word.word, bonus_letters, letter_scores))
+		print(calc_score(first_word.word, bonus_letters, letter_scores))
 
 
 
