@@ -497,6 +497,9 @@ def identify_bonus(word, game_grid):
 					blocs.append(game_grid[loc[0]][loc[1]])
 			continue
 
+		# Adjacent letters are only added for 5 letter words and longer.
+		if len(word.word) < 5:
+			continue
 		# else square must be white so check all adjacent squares
 		for i in [y-1, y+1]:
 			j = x
@@ -580,7 +583,6 @@ def main():
 	words = [1] # Initialize for while loop
 	score = 0
 	used_words = []
-	game_states = []
 
 	while len(words) > 0:
 		words = []
@@ -597,7 +599,6 @@ def main():
 
 			score += words[0].score
 			used_words.append(words[0].word)
-
 		
 			print_game(game_grid, words[0])
 
