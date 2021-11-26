@@ -41,15 +41,19 @@ class Word():
 		  bonus_locs (list of tuples of ints):
 		    list of locations of bonus tiles that will be removed by
 		    this word and will be used for scoring.
+		  bonus_letters (str):
+		    The letters in the bonus squares.
 		  score (int):
 		    Score of this word.
 
 	"""
-	def __init__(self, word, locs, bonus_sqs=[], bonus_locs=[], score=0):
+	def __init__(self, word, locs, bonus_sqs=[], bonus_locs=[], score=0,
+		bonus_letters=''):
 		self.word = word
 		self.locs = locs
 		self.bonus_sqs = bonus_sqs
 		self.bonus_locs = bonus_locs
+		self.bonus_letters = bonus_letters
 		self.score = score
 
 
@@ -267,7 +271,7 @@ def populate_grid(image, grid):
 	return game_grid
 
 
-def calc_score(word, bonus_letters, score_dict):
+def calc_score(word, score_dict):
 	"""Calculates score of a word based on simple rules.
 	
 	Calculates score for words based on what seems to be the scoring
@@ -278,10 +282,8 @@ def calc_score(word, bonus_letters, score_dict):
 	of the word.
 
 	Args:
-	  word (str):
-		Any string of alphabetical characters
-	  bonus_letters (str):
-	    The bonus letters given for words over 4 characters
+	  word (Word instance):
+		Word instance containing information about the word
 	  score_dict (dict):
 		Characters as keys, their corresponding integer score as values
 
@@ -291,23 +293,24 @@ def calc_score(word, bonus_letters, score_dict):
 
 	score = 0
 
-	for c in word.upper(): # Ensure upper case and go letter by letter
+
+
+	for c in word.word.upper(): # Ensure upper case and go letter by letter
 		score += score_dict[c]
 
 
 	bonus_score = 0
-	for c in bonus_letters.upper():
+	for c in word.bonus_letters.upper():
 		bonus_score += score_dict[c]
 
-
-	score = (score+bonus_score) * len(word)
+	score = (score+bonus_score) * len(word.word)
 
 
 	return score
 
 
-def identify_words(grid, start, fragments_dict, current_word='',
-	current_locs=[]):
+def identify_words(grid, start, fragments_dict, current_word,
+	current_locs, score_dict):
 	"""
 
 	Args:
@@ -322,6 +325,8 @@ def identify_words(grid, start, fragments_dict, current_word='',
 	    The letters that have been added to the word so far.
 	  current_locs (list of tuples or ints):
 	    The locations of letters added to the word so far.
+	  score_dict (dict):
+		Characters as keys, their corresponding integer score as values
 
 	Yields:
 	  Word instance of every word, its string and a list of its 
@@ -357,20 +362,28 @@ def identify_words(grid, start, fragments_dict, current_word='',
 			if fragments_dict[new_word] == 'w':
 				locs = current_locs + [(i,j)]
 				finished_word = Word(new_word,locs)
+				finished_word = identify_bonus(finished_word, grid)
+				finished_word.score = calc_score(finished_word, score_dict)
 				yield finished_word
 
 			elif fragments_dict[new_word]== 'b':
 				locs = current_locs + [(i,j)]
 				for word in identify_words(grid, (i,j), fragments_dict, 
-					current_word=new_word, current_locs=locs):
+					new_word, locs, score_dict):
+					word = identify_bonus(word, grid)
+					word.score = calc_score(word, score_dict)
 					yield word
 				finished_word = Word(new_word,locs)
+				finished_word = identify_bonus(finished_word, grid)
+				finished_word.score = calc_score(finished_word, score_dict)
 				yield finished_word
 				
 			else:
 				locs = current_locs + [(i,j)]
 				for word in identify_words(grid, (i,j), fragments_dict, 
-					current_word=new_word, current_locs=locs):
+					new_word, locs, score_dict):
+					word = identify_bonus(word, grid)
+					word.score = calc_score(word, score_dict)
 					yield word
 
 
@@ -490,8 +503,14 @@ def identify_bonus(word, game_grid):
 				continue
 
 			blocs.append(game_grid[i][j])
+	word.bonus_sqs = blocs
+	word.bonus_locs = [i.loc for i in word.bonus_sqs]
+	word.bonus_letters = ''.join([i.letter for i in word.bonus_sqs])
+	if len(word.bonus_letters) != 0:
+		word.bonus_letters += word.word
 
-	return blocs
+
+	return word
 
 
 def main():
@@ -522,31 +541,17 @@ def main():
 	for y in range(len(game_grid)):
 		for x in range(len(game_grid[0])):
 			words += [i for i in identify_words(game_grid,(y,x),indexed_dict,
-				current_word=game_grid[y][x].letter.lower(), 
-				current_locs=[(y,x)])]
+				game_grid[y][x].letter.lower(), [(y,x)], letter_scores)]
 
 	# words += [i for i in identify_words(game_grid,(0,0),indexed_dict,
 				# current_word=game_grid[0][0].letter.lower(), 
 				# current_locs=[(0,0)])]
 
-	words.sort(key=lambda x: len(x.word), reverse=True)
+	words.sort(key=lambda x: x.score, reverse=True)
 	
 	for first_word in words[:3]:
 
-		first_word.bonus_sqs = identify_bonus(first_word, game_grid)
-
-		first_word.bonus_locs = [i.loc for i in first_word.bonus_sqs]
-
-		bonus_letters = (''.join([i.letter for i in first_word.bonus_sqs]) 
-			+ first_word.word)
-
-
 		print_game(game_grid, first_word)
-
-		
-
-		print(calc_score(first_word.word, bonus_letters, letter_scores))
-
 
 
 if __name__ == '__main__':
