@@ -372,6 +372,19 @@ def identify_words(grid, start, fragments_dict, current_word='',
 
 
 def print_game(game_grid, word=None):
+	"""Prints the game grid to the terminal with optional word highlight
+
+	Prints the letters of the game in a grid arrangement in the terminal.
+	If a Word is specified then the letters of the word and bonus tiles
+	arround the word (if applicable) are highlighted with a different
+	colour.
+
+	Args:
+	  game_grid (list of lists of GameSquare instances):
+		The tiles in the game in an array.
+	  word (Word instances):
+		A words to be highlighted
+	"""
 
 	cols = {
 	'Bold': '\u001b[1m',
@@ -432,6 +445,11 @@ def print_game(game_grid, word=None):
 	print(string)
 
 
+def identify_bonus(word, game_grid):
+	pass
+
+
+
 def main():
 
 	with open('indexed_dict.json') as fin:
@@ -470,7 +488,7 @@ def main():
 	words.sort(key=lambda x: len(x.word), reverse=True)
 	# print([vars(i) for i in words])
 
-	print_game(game_grid)#, words[0])
+	print_game(game_grid, words[0])
 
 
 
