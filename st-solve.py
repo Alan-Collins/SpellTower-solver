@@ -36,16 +36,19 @@ class Word():
 		    The sequence of characters identified as a word.
 		  locs (list of tuples of ints):
 		    list of location of each character of word in game grid.
-		   bonus_locs (list of tuples of ints):
-		     list of locations of bonus tiles that will be removed by
-		     this word and will be used for scoring.
-		   score (int):
-		     Score of this word.
+		  bonus_sqs (list of GameSquare instances):
+		    the GameSquares in the bonus locations.
+		  bonus_locs (list of tuples of ints):
+		    list of locations of bonus tiles that will be removed by
+		    this word and will be used for scoring.
+		  score (int):
+		    Score of this word.
 
 	"""
-	def __init__(self, word, locs, bonus_locs=[], score=0):
+	def __init__(self, word, locs, bonus_sqs=[], bonus_locs=[], score=0):
 		self.word = word
 		self.locs = locs
+		self.bonus_sqs = bonus_sqs
 		self.bonus_locs = bonus_locs
 		self.score = score
 
@@ -446,8 +449,42 @@ def print_game(game_grid, word=None):
 
 
 def identify_bonus(word, game_grid):
-	pass
+	
+	blocs = [] # bonus locations
 
+	for wloc in word.locs:
+		y,x = wloc
+		wsquare = game_grid[y][x]
+
+		if wsquare.behaviour == 'blue':
+			# If it's blue add the whole row
+			for square in game_grid[y]:
+				if (y,x) not in word.locs:
+					blocs.append(square)
+			# And the square above and below it
+			for loc in [(y-1, x), (y+1, x)]:
+				# If outside of game grid skip
+				if loc[0] < 0 or loc[0] >= len(game_grid):
+					continue
+				if loc not in word.locs:
+					blocs.append(game_grid[loc[0]][loc[1]])
+			continue
+
+		# else square must be white so check all adjacent squares
+		for i in [y-1, y+1]:
+			# If outside of game grid skip
+			if i < 0 or i >= len(game_grid):
+				continue
+			for j in [x-1, x+1]:
+				# If outside of game grid skip
+				if j < 0 or j >= len(game_grid[0]):
+					continue
+				if (i,j) in word.locs: # Don't inlcude word squares
+					continue
+
+				blocs.append(game_grid[i][j])
+
+	return blocs
 
 
 def main():
@@ -486,9 +523,23 @@ def main():
 				# current_locs=[(0,0)])]
 
 	words.sort(key=lambda x: len(x.word), reverse=True)
-	# print([vars(i) for i in words])
+	
 
-	print_game(game_grid, words[0])
+	first_word = words[0]
+
+	first_word.bonus_sqs = identify_bonus(first_word, game_grid)
+
+	first_word.bonus_locs = [i.loc for i in first_word.bonus_sqs]
+
+	bonus_letters = (''.join([i.letter for i in first_word.bonus_sqs]) 
+		+ first_word.word)
+
+
+	print_game(game_grid, first_word)
+
+	
+
+	print(calc_score(first_word.word, bonus_letters, letter_scores))
 
 
 
