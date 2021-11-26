@@ -267,7 +267,7 @@ def populate_grid(image, grid):
 	return game_grid
 
 
-def calc_score(word, bonus_letters, score_dict):
+def calc_score(word, bonus_letters, score_dict, nblue):
 	"""Calculates score of a word based on simple rules.
 	
 	Calculates score for words based on what seems to be the scoring
@@ -284,6 +284,9 @@ def calc_score(word, bonus_letters, score_dict):
 	    The bonus letters given for words over 4 characters
 	  score_dict (dict):
 		Characters as keys, their corresponding integer score as values
+	  nblue (int):
+	    number of blue squares in the list of bonus squares. Each is
+	    worth 10 points.
 	  
 
 	Returns:
@@ -291,6 +294,8 @@ def calc_score(word, bonus_letters, score_dict):
 	"""
 
 	score = 0
+
+	score += 10*nblue
 
 	for c in word.upper(): # Ensure upper case and go letter by letter
 		score += score_dict[c]
