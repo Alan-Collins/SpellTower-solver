@@ -350,6 +350,10 @@ def identify_words(grid, start, fragments_dict, current_word,
 			if (i,j) in current_locs:
 				continue
 
+			# If square has been removed, continue
+			if not grid[i][j]:
+				continue
+
 			letter = grid[i][j].letter.lower()
 			if letter == '':
 				continue
@@ -398,7 +402,7 @@ def print_game(game_grid, word=None):
 	Args:
 	  game_grid (list of lists of GameSquare instances):
 		The tiles in the game in an array.
-	  word (Word instances):
+	  word (Word instance):
 		A words to be highlighted
 	"""
 
@@ -425,6 +429,13 @@ def print_game(game_grid, word=None):
 	for line in game_grid:
 		line_squares = []
 		for square in line:
+			if not square:
+				line_squares.append('{}{}{}'.format(
+					cols['Black'],
+					'-',
+					cols['Reset']
+					))
+				continue
 			
 			# To align columns, empty strings must be set to a space
 			if square.letter == '':
@@ -479,6 +490,9 @@ def identify_bonus(word, game_grid):
 				# If outside of game grid skip
 				if loc[0] < 0 or loc[0] >= len(game_grid):
 					continue
+				# If square removed skip
+				if not game_grid[loc[0]][loc[1]]:
+					continue
 				if loc not in word.locs:
 					blocs.append(game_grid[loc[0]][loc[1]])
 			continue
@@ -491,6 +505,8 @@ def identify_bonus(word, game_grid):
 				continue
 			if (i,j) in word.locs: # Don't inlcude word squares
 				continue
+			if not game_grid[i][j]:
+					continue
 
 			blocs.append(game_grid[i][j])
 
@@ -499,6 +515,8 @@ def identify_bonus(word, game_grid):
 			# If outside of game grid skip
 			if j < 0 or j >= len(game_grid[0]):
 				continue
+			if not game_grid[i][j]:
+					continue
 			if (i,j) in word.locs: # Don't inlcude word squares
 				continue
 
@@ -509,8 +527,31 @@ def identify_bonus(word, game_grid):
 	if len(word.bonus_letters) != 0:
 		word.bonus_letters += word.word
 
-
 	return word
+
+
+def remove_word(word, grid):
+
+	for loc in word.locs:
+		y,x = loc
+		grid[y][x] = None
+
+	for loc in word.bonus_locs:
+		y,x = loc
+		grid[y][x] = None
+
+	for x in range(len(grid[0])):
+		repeat = True # Keep track of whether another pass is needed.
+		while repeat:
+			repeat = False # set to true if a switch is perfomed.
+			for y in range(1, len(grid)):
+				# if the square is None but the square above is not
+				if not grid[y][x] and grid[y-1][x]:
+					grid[y][x], grid[y-1][x] = grid[y-1][x], grid[y][x]
+					grid[y][x].loc = (y,x)
+					repeat=True
+
+	return grid
 
 
 def main():
@@ -536,22 +577,37 @@ def main():
 	game_grid = populate_grid(image, grid)
 
 	
+	words = [1] # Initialize for while loop
+	score = 0
+	used_words = []
+	game_states = []
 
-	words = []
-	for y in range(len(game_grid)):
-		for x in range(len(game_grid[0])):
-			words += [i for i in identify_words(game_grid,(y,x),indexed_dict,
-				game_grid[y][x].letter.lower(), [(y,x)], letter_scores)]
+	while len(words) > 0:
+		words = []
+		for y in range(len(game_grid)):
+			for x in range(len(game_grid[0])):
+				if game_grid[y][x]:
+					words += [i for i in identify_words(game_grid,(y,x),
+						indexed_dict, game_grid[y][x].letter.lower(), [(y,x)],
+						letter_scores)]
 
-	# words += [i for i in identify_words(game_grid,(0,0),indexed_dict,
-				# current_word=game_grid[0][0].letter.lower(), 
-				# current_locs=[(0,0)])]
+		words.sort(key=lambda x: x.score, reverse=True)
 
-	words.sort(key=lambda x: x.score, reverse=True)
-	
-	for first_word in words[:3]:
+		if len(words) > 0:
 
-		print_game(game_grid, first_word)
+			score += words[0].score
+			used_words.append(words[0].word)
+
+		
+			print_game(game_grid, words[0])
+
+			game_grid = remove_word(words[0], game_grid)
+
+			print_game(game_grid)
+
+	print('Final score was {}\n\nWords found:\n{}'.format(score,
+		'\n'.join(used_words)))
+
 
 
 if __name__ == '__main__':
