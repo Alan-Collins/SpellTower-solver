@@ -418,7 +418,7 @@ def print_game(game_grid, word=None):
 	
 	# If highlighting a word, extract relevant locations.
 	if word:
-		print(word.word)
+		print('Word: {}\nScore: {}'.format(word.word, word.score))
 	word_idxs = word.locs if word else []
 	bonus_idxs = word.bonus_locs if word else []
 	string = ''
