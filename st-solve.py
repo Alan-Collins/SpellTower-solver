@@ -480,10 +480,13 @@ def identify_bonus(word, game_grid):
 		y,x = wloc
 		wsquare = game_grid[y][x]
 
+
 		if wsquare.behaviour == 'blue':
 			# If it's blue add the whole row
 			for square in game_grid[y]:
-				if (y,x) not in word.locs:
+				if not square:
+					continue
+				if square.loc != (y,x):
 					blocs.append(square)
 			# And the square above and below it
 			for loc in [(y-1, x), (y+1, x)]:
