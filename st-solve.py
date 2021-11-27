@@ -473,6 +473,23 @@ def print_game(game_grid, word=None):
 
 
 def identify_bonus(word, game_grid):
+	"""Identify the letters surrounding a word that will be scored.
+	
+	Based on word length and the behaviour of squares in the word,
+	identify letters in the game grid that will be included in scoring
+	and removed from play.
+
+	Args:
+	  word (Word instance):
+		A words to be highlighted
+	  game_grid (list of lists of GameSquare instances):
+		The tiles in the game in an array.
+
+	Returns:
+	  word (Word instance)
+	  Adds bonus information to the provided word instance and returns
+	  modified object
+	"""
 	
 	blocs = [] # bonus locations
 
@@ -537,6 +554,23 @@ def identify_bonus(word, game_grid):
 
 
 def remove_word(word, grid):
+	"""Remove word and associated bonus squares from play.
+	
+	Removes word and bonus squares from game grid and adjusts position
+	of all squares so that removed squares are moved to the top of the
+	grid.
+
+	Args:
+	  word (Word instance):
+		A words to be highlighted
+	  game_grid (list of lists of GameSquare instances):
+		The tiles in the game in an array.
+
+	Returns:
+	  grid (List of lists of GameSquare instances of None)
+	  Removed squares are replaced with None. Remaining squares are
+	  GameSpace instances.
+	"""
 
 	for loc in word.locs:
 		y,x = loc
